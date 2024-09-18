@@ -268,23 +268,104 @@ s.parentNode.insertBefore(b, s);})(window.lintrk);
   </div>
   <!-- Examples of different CSS selectors -->
  <script>
-        function init() {
-          fetch(`https://estperfsmall-us-west.eng.macrometa.io/api/est/v1/tracker/inject-script`)
-            .then((response) => response.text())
-            .then((data) => {
-              const { execute } = JSON.parse(data);
-              let script = document.createElement("script");
-              script.textContent = execute;
-              document.body.appendChild(script);
-              photoniqest.settings("pageview")
-                .then(() => { photoniqest._processServerResponse({ pageVars: [], fetch: [], execute: [] }); });
-            })
-            .catch((error) => {
-              console.error("Error fetching injected code:", error);
-            });
-        }
-        init();
-      </script>
+  // Function to parse query parameters
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  // Function to inject a script
+  function injectScript(src, isAsync = true) {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = isAsync;
+    document.head.appendChild(script);
+  }
+
+  // Function to handle the EST case
+  function handleEST() {
+    fetch(`https://estperfsmall-us-west.eng.macrometa.io/api/est/v1/tracker/inject-script`)
+      .then((response) => response.text())
+      .then((data) => {
+        const { execute } = JSON.parse(data);
+        let script = document.createElement("script");
+        script.textContent = execute;
+        document.body.appendChild(script);
+        photoniqest.settings("pageview").then(() => {
+          photoniqest._processServerResponse({ pageVars: [], fetch: [], execute: [] });
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching injected code:", error);
+      });
+  }
+
+  // Function to inject third-party tags
+  function injectThirdPartyTags() {
+    // Inject Facebook Pixel
+    !function(f, b, e, v, n, t, s) {
+      if (f.fbq) return;
+      n = f.fbq = function() {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n;
+      n.push = n;
+      n.loaded = !0;
+      n.version = '2.0';
+      n.queue = [];
+      t = b.createElement(e);
+      t.async = !0;
+      t.src = v;
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '433889730767799');
+    fbq('track', 'PageView');
+
+    // Inject Google Tag Manager
+    injectScript("https://www.googletagmanager.com/gtag/js?id=G-ZZ31K0W4JX");
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-ZZ31K0W4JX');
+
+    // Inject Google Floodlight Tag
+    (function() {
+      var axel = Math.random() + "";
+      var a = axel * 10000000000000;
+      var tag = document.createElement("iframe");
+      tag.src = "https://fls.doubleclick.net/activityi;src=10896670394;type=FLD-YYYYYYYYYY;cat=FLD-ZZZZZZZZZZ;dc_lat=;dc_rdid=;tag_for_child_directed_treatment=;ord=" + a + "?";
+      tag.width = "1";
+      tag.height = "1";
+      tag.style = "display:none";
+      document.body.appendChild(tag);
+    })();
+
+    // Inject Google Ads Remarketing and Conversion Tracking
+    injectScript("https://www.googletagmanager.com/gtag/js?id=AW-10896670394");
+    gtag('config', 'AW-10896670394');
+    gtag('event', 'remarketing', {
+      'send_to': 'AW-10896670394'
+    });
+    gtag('event', 'conversion', {
+      'send_to': 'AW-10896670394/abcDEFghiJKL',
+      'transaction_id': ''  // Optional: Include transaction ID for e-commerce tracking, leave empty if not applicable
+    });
+  }
+
+  // Main logic
+  const est = getQueryParam('est');
+
+  if (est === 'true') {
+    console.log("EST script triggered");
+    handleEST();
+  } else {
+    console.log("Third-party scripts triggered");
+    injectThirdPartyTags();
+  }
+</script>
   <!-- Additional Elements for Testing -->
   <div class="center">
     <button class="customClass">Click me (Custom Class)!</button>
